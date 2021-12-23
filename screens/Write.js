@@ -1,3 +1,4 @@
+import { AdMobInterstitial, AdMobRewarded } from "expo-ads-admob";
 import React, { useContext, useState } from "react";
 import { Alert } from "react-native";
 import styled from "styled-components/native";
@@ -60,18 +61,25 @@ const Write = ({ navigation: { goBack } }) => {
   const [feelings, setFeelings] = useState("");
   const onChangeText = (text) => setFeelings(text);
   const onEmotionPress = (face) => setEmotion(face);
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (feelings === "" || selectedEmotion === null) {
       return Alert.alert("Please complete form.");
     }
-    realm.write(() => {
-      const feeling = realm.create("Feeling", {
-        _id: Date.now(),
-        emotion: selectedEmotion,
-        message: feelings,
+    await AdMobRewarded.setAdUnitID("ca-app-pub-3940256099942544/1712485313");
+    await AdMobRewarded.requestAdAsync();
+    await AdMobRewarded.showAdAsync();
+    AdMobRewarded.addEventListener("rewardedVideoUserDidEarnReward", () => {
+      AdMobRewarded.addEventListener("rewardedVideoDidDismiss", () => {
+        realm.write(() => {
+          const feeling = realm.create("Feeling", {
+            _id: Date.now(),
+            emotion: selectedEmotion,
+            message: feelings,
+          });
+        });
+        goBack();
       });
     });
-    goBack();
   };
 
   return (
